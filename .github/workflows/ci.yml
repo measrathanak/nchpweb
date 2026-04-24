@@ -7,8 +7,26 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: npch_user
+          POSTGRES_PASSWORD: npch_password
+          POSTGRES_DB: npch_website
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U npch_user -d npch_website"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://npch_user:npch_password@localhost:5432/npch_website?schema=public
+      NEXTAUTH_SECRET: ci-test-secret
+      ADMIN_EMAILS: demo@npch.local,admin@npch.local
 
     steps:
       - name: Checkout
@@ -19,31 +37,28 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare database schema
+        run: npm run db:push
+
+      - name: Seed database
+        run: npm run db:seed
 
       - name: Run lint
         run: npm run lint
 
-  test-and-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run tests
+      - name: Run unit tests
         run: npm run test
 
       - name: Build app
         run: npm run build
+
+      - name: Run Playwright E2E
+        run: npm run test:e2e
