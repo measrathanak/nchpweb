@@ -1,9 +1,45 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { copy, toLocale } from "@/lib/i18n";
+import { getLocaleAlternates, resolveOgImageUrl } from "@/lib/seo";
 import { getArticle } from "@/lib/typo3-client";
 
 interface Props {
   params: Promise<{ locale: string; uid: string }>;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; uid: string }> }): Promise<Metadata> {
+  const { locale, uid } = await params;
+  const localeValue = toLocale(locale);
+  const t = copy[localeValue];
+  const articleUid = Number(uid);
+
+  if (!Number.isFinite(articleUid) || articleUid <= 0) {
+    return { title: t.articleNotFound };
+  }
+
+  const article = await getArticle(articleUid, localeValue);
+
+  if (!article) {
+    return { title: t.articleNotFound };
+  }
+
+  return {
+    title: article.title,
+    description: article.subtitle,
+    alternates: {
+      canonical: `/${localeValue}/article/${articleUid}`,
+      languages: getLocaleAlternates((l) => `/${l}/article/${articleUid}`),
+    },
+    openGraph: {
+      type: "article",
+      description: article.subtitle,
+      images: [{ url: resolveOgImageUrl() }],
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+  };
 }
 
 export default async function ArticleDetailPage({ params }: Props) {

@@ -11,7 +11,7 @@ export const copy = {
   en: {
     siteName: "NPCH News Platform",
     homeTitle: "Latest News & Content",
-    homeIntro: "Multilingual (Khmer/English) news site powered by Headless TYPO3.",
+    homeIntro: "NPCH multilingual (Khmer/English) news platform powered by Headless TYPO3.",
     latest: "Latest Articles",
     browseAll: "Browse all articles",
     readMore: "Read more",

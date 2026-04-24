@@ -38,6 +38,9 @@ function getRevalidateSeconds() {
   return Math.floor(value);
 }
 
+/** Exported for testability */
+export const getTypo3RevalidateSeconds = getRevalidateSeconds;
+
 function getFetchOptions(): RequestInit {
   return {
     headers: {

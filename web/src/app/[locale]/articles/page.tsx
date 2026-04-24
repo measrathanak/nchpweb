@@ -1,10 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { copy, toLocale } from "@/lib/i18n";
+import { getLocaleAlternates } from "@/lib/seo";
 import { getArticles, searchArticles } from "@/lib/typo3-client";
 
 interface Props {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ q?: string }>;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const localeValue = toLocale(locale);
+  const t = copy[localeValue];
+
+  return {
+    title: t.seoArticlesTitle,
+    description: t.seoArticlesDescription,
+    alternates: {
+      canonical: `/${localeValue}/articles`,
+      languages: getLocaleAlternates((l) => `/${l}/articles`),
+    },
+    openGraph: {
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+  };
 }
 
 export default async function ArticlesPage({ params, searchParams }: Props) {

@@ -32,6 +32,7 @@ export function getRevalidationPaths({ uid, locales: requestedLocales, scope = "
   for (const locale of targetLocales) {
     paths.add(`/${locale}`);
     paths.add(`/${locale}/articles`);
+    paths.add(`/${locale}/articles/feed.xml`);
 
     if (scope === "article" && Number.isFinite(uid) && (uid ?? 0) > 0) {
       paths.add(`/${locale}/article/${uid}`);
@@ -71,6 +72,9 @@ export function isFreshTimestamp(timestamp: string, now = Date.now()) {
   if (!Number.isFinite(parsed) || parsed <= 0) return false;
   return Math.abs(now - parsed) <= getTimestampToleranceSeconds() * 1000;
 }
+
+/** Alias used by tests */
+export const isFreshRevalidationTimestamp = isFreshTimestamp;
 
 export function isValidRevalidationSignature(body: string, timestamp: string, signature: string | null, secret: string | null) {
   if (!signature || !secret || !isFreshTimestamp(timestamp)) return false;

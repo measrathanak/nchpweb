@@ -6,13 +6,18 @@ interface Props {
   params: Promise<{ locale: string }>;
 }
 
+const ogLocaleMap: Record<string, string> = {
+  en: "en_US",
+  km: "km_KH",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const localeValue = toLocale(locale);
   const t = copy[localeValue];
 
   return {
-    title: t.siteName,
+    title: t.seoSiteName,
     description: t.homeIntro,
     alternates: {
       canonical: `/${localeValue}`,
@@ -20,6 +25,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
         en: "/en",
         km: "/km",
       },
+    },
+    openGraph: {
+      locale: ogLocaleMap[localeValue] ?? "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
     },
   };
 }
