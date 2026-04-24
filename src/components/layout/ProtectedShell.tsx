@@ -36,6 +36,30 @@ const pageInfo: Record<string, { titleEn: string; titleKm: string; descEn: strin
     descEn: 'Manage system users and their contact details.',
     descKm: 'គ្រប់គ្រងអ្នកប្រើប្រាស់ និងព័ត៌មានទំនាក់ទំនងក្នុងប្រព័ន្ធ។',
   },
+  '/roles': {
+    titleEn: 'Roles',
+    titleKm: 'តួនាទី',
+    descEn: 'Manage roles and access permissions for users.',
+    descKm: 'គ្រប់គ្រងតួនាទី និងសិទ្ធិចូលប្រើសម្រាប់អ្នកប្រើប្រាស់។',
+  },
+  '/role-user': {
+    titleEn: 'Role User',
+    titleKm: 'អ្នកប្រើប្រាស់តួនាទី',
+    descEn: 'Manage users assigned to each role.',
+    descKm: 'គ្រប់គ្រងអ្នកប្រើប្រាស់សម្រាប់តួនាទីនីមួយៗ។',
+  },
+  '/languages': {
+    titleEn: 'Languages',
+    titleKm: 'ភាសា',
+    descEn: 'Manage available languages.',
+    descKm: 'គ្រប់គ្រងភាសាដែលមាន។',
+  },
+  '/login-audits': {
+    titleEn: 'Login Audit Logs',
+    titleKm: 'ឯកសារលោការ',
+    descEn: 'View detailed login history.',
+    descKm: 'មើលលម្អិតពីការចូលប្រើប្រាស់របស់អ្នក។',
+  },
   '/dashboard': {
     titleEn: 'NPCH',
     titleKm: 'NPCH',

@@ -1,17 +1,16 @@
 import { redirect } from 'next/navigation';
 import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
-import prisma from '@/lib/db';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
-import RolesTable from '@/components/roles/RolesTable';
+import LoginAuditLogs from '@/components/settings/LoginAuditLogs';
 
-interface RolesPageProps {
+interface LoginAuditsPageProps {
   params: Promise<{ locale: string }>;
 }
 
-export default async function RolesPage({ params }: RolesPageProps) {
+export default async function LoginAuditsPage({ params }: LoginAuditsPageProps) {
   const { locale } = await params;
   const localeValue = locale as Locale;
   const session = await auth();
@@ -27,21 +26,11 @@ export default async function RolesPage({ params }: RolesPageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
-  const roles = await prisma.role.findMany({ orderBy: { createdAt: 'desc' } });
-
-  const labels = {
-    title: localeValue === 'km' ? 'តួនាទី' : 'Roles',
-    subtitle:
-      localeValue === 'km'
-        ? 'គ្រប់គ្រងតួនាទី និងសិទ្ធិចូលប្រើសម្រាប់អ្នកប្រើប្រាស់។'
-        : 'Manage roles and access permissions for users.',
-  };
-
   return (
     <ManagementPageShell
-      title={labels.title}
-      subtitle={labels.subtitle}
-      main={<RolesTable initial={roles} />}
+      title={localeValue === 'km' ? 'ឯកសារលោការ' : 'Login Audit Logs'}
+      subtitle={localeValue === 'km' ? 'មើលលម្អិតពីការចូលប្រើប្រាស់របស់អ្នក។' : 'View detailed login history.'}
+      main={<LoginAuditLogs />}
     />
   );
 }

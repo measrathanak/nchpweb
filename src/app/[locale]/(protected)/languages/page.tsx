@@ -5,13 +5,13 @@ import prisma from '@/lib/db';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
-import RolesTable from '@/components/roles/RolesTable';
+import LanguagesTable from '@/components/settings/LanguagesTable';
 
-interface RolesPageProps {
+interface LanguagesPageProps {
   params: Promise<{ locale: string }>;
 }
 
-export default async function RolesPage({ params }: RolesPageProps) {
+export default async function LanguagesPage({ params }: LanguagesPageProps) {
   const { locale } = await params;
   const localeValue = locale as Locale;
   const session = await auth();
@@ -27,21 +27,13 @@ export default async function RolesPage({ params }: RolesPageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
-  const roles = await prisma.role.findMany({ orderBy: { createdAt: 'desc' } });
-
-  const labels = {
-    title: localeValue === 'km' ? 'តួនាទី' : 'Roles',
-    subtitle:
-      localeValue === 'km'
-        ? 'គ្រប់គ្រងតួនាទី និងសិទ្ធិចូលប្រើសម្រាប់អ្នកប្រើប្រាស់។'
-        : 'Manage roles and access permissions for users.',
-  };
+  const languages = await prisma.language.findMany({ orderBy: { sortOrder: 'asc' } });
 
   return (
     <ManagementPageShell
-      title={labels.title}
-      subtitle={labels.subtitle}
-      main={<RolesTable initial={roles} />}
+      title={localeValue === 'km' ? 'ភាសា' : 'Languages'}
+      subtitle={localeValue === 'km' ? 'គ្រប់គ្រងភាសាដែលមាន។' : 'Manage available languages.'}
+      main={<LanguagesTable initial={languages} />}
     />
   );
 }

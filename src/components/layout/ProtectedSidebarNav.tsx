@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { Locale } from '@/lib/i18n';
 
 type NavItem = {
@@ -9,7 +10,8 @@ type NavItem = {
   labelEn: string;
   labelKm: string;
   href?: string;
-  icon: 'docs' | 'saved' | 'audit' | 'archive' | 'profile' | 'debug' | 'users' | 'roles' | 'settings';
+  icon: 'docs' | 'saved' | 'audit' | 'archive' | 'profile' | 'debug' | 'users' | 'roles' | 'role-user' | 'languages' | 'login-audits' | 'settings';
+  children?: NavItem[];
 };
 
 function NavIcon({ icon, className = 'h-4 w-4' }: { icon: NavItem['icon']; className?: string }) {
@@ -71,6 +73,29 @@ function NavIcon({ icon, className = 'h-4 w-4' }: { icon: NavItem['icon']; class
         <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M12 3l8 4v6c0 4.5-3 7.5-8 8-5-.5-8-3.5-8-8V7z" />
           <path d="M9 12l2 2 4-4" />
+        </svg>
+      );
+    case 'role-user':
+      return (
+        <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3.5 19c1.3-2.8 3.4-4.2 6.5-4.2" />
+          <path d="M14 15l2 2 4-4" />
+        </svg>
+      );
+    case 'languages':
+      return (
+        <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+      );
+    case 'login-audits':
+      return (
+        <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M9 3h6v3H9z" />
+          <path d="M3 6h18v12H3z" />
+          <path d="M9 11v4M12 11v4M15 11v4" />
         </svg>
       );
     default:
@@ -213,7 +238,17 @@ const navSections: { title: string; items: NavItem[] }[] = [
       { key: 'role-debug', labelEn: 'Role Debug', labelKm: 'ពិនិត្យតួនាទី', href: '/role-debug', icon: 'debug' },
       { key: 'users', labelEn: 'Users', labelKm: 'អ្នកប្រើប្រាស់', href: '/users', icon: 'users' },
       { key: 'roles', labelEn: 'Roles', labelKm: 'តួនាទី', href: '/roles', icon: 'roles' },
-      { key: 'settings', labelEn: 'Settings', labelKm: 'ការកំណត់', href: '/settings', icon: 'settings' },
+      { key: 'role-user', labelEn: 'Role User', labelKm: 'អ្នកប្រើតួនាទី', href: '/role-user', icon: 'role-user' },
+      {
+        key: 'settings',
+        labelEn: 'Settings',
+        labelKm: 'ការកំណត់',
+        icon: 'settings',
+        children: [
+          { key: 'languages', labelEn: 'Languages', labelKm: 'ភាសា', href: '/languages', icon: 'languages' },
+          { key: 'login-audits', labelEn: 'Login Audits', labelKm: 'ឯកសារលោការ', href: '/login-audits', icon: 'login-audits' },
+        ],
+      },
     ],
   },
 ];
@@ -228,6 +263,99 @@ interface ProtectedSidebarNavProps {
 export default function ProtectedSidebarNav({ locale, className, onItemClick, collapsed = false }: ProtectedSidebarNavProps) {
   const pathname = usePathname();
   const isDev = process.env.NODE_ENV !== 'production';
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(['settings'])); // Settings expanded by default
+
+  const toggleExpanded = (key: string) => {
+    const newSet = new Set(expandedKeys);
+    if (newSet.has(key)) {
+      newSet.delete(key);
+    } else {
+      newSet.add(key);
+    }
+    setExpandedKeys(newSet);
+  };
+
+  const renderNavItem = (item: NavItem, depth: number = 0) => {
+    if (item.key === 'role-debug' && !isDev) {
+      return null;
+    }
+
+    const label = locale === 'km' ? item.labelKm : item.labelEn;
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedKeys.has(item.key);
+
+    // Disabled placeholder for items without href and no children
+    if (!item.href && !hasChildren) {
+      return (
+        <div
+          key={item.key}
+          title={label}
+          className={`flex cursor-not-allowed items-center rounded-2xl py-3 text-sm font-medium text-slate-400 ${
+            collapsed ? 'justify-center px-2' : 'gap-2 px-3'
+          }`}
+        >
+          <NavIcon icon={item.icon} className={collapsed ? 'h-7 w-7 text-slate-400' : 'h-5 w-5'} />
+          {!collapsed ? label : null}
+        </div>
+      );
+    }
+
+    // Collapsible menu item (has children)
+    if (hasChildren) {
+      return (
+        <div key={item.key}>
+          <button
+            onClick={() => toggleExpanded(item.key)}
+            title={label}
+            className={`w-full flex items-center rounded-2xl py-3 text-sm font-medium transition-colors text-slate-700 hover:bg-slate-200 hover:text-slate-900 ${
+              collapsed ? 'justify-center px-2' : 'gap-2 px-3'
+            }`}
+          >
+            <NavIcon icon={item.icon} className={collapsed ? 'h-7 w-7 text-slate-600' : 'h-5 w-5'} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left">{label}</span>
+                <svg
+                  className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </>
+            )}
+          </button>
+          {isExpanded && !collapsed && (
+            <div className="ml-2 space-y-1 border-l border-slate-200 pl-2">
+              {item.children!.map((child) => renderNavItem(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Regular link item
+    const fullHref = `/${locale}${item.href}`;
+    const active = pathname === fullHref;
+
+    return (
+      <Link
+        key={item.key}
+        href={fullHref}
+        onClick={onItemClick}
+        title={label}
+        className={`flex items-center rounded-2xl py-3 text-sm font-medium transition-colors ${
+          active
+            ? 'bg-indigo-100 text-indigo-800'
+            : 'text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+        } ${collapsed ? 'justify-center px-2' : 'gap-2 px-3'}`}
+      >
+        <NavIcon icon={item.icon} className={collapsed ? `h-7 w-7 ${active ? 'text-indigo-700' : 'text-slate-600'}` : 'h-5 w-5'} />
+        {!collapsed ? label : null}
+      </Link>
+    );
+  };
 
   return (
     <aside className={className ?? 'hidden w-72 flex-shrink-0 border-r border-slate-200 bg-slate-50 lg:block'}>
@@ -239,47 +367,7 @@ export default function ProtectedSidebarNav({ locale, className, onItemClick, co
                 <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{section.title}</p>
               ) : null}
               <nav className={collapsed ? 'space-y-3' : 'space-y-1'}>
-                {section.items.map((item) => {
-                  if (item.key === 'role-debug' && !isDev) {
-                    return null;
-                  }
-
-                  const label = locale === 'km' ? item.labelKm : item.labelEn;
-                  if (!item.href) {
-                    return (
-                      <div
-                        key={item.key}
-                        title={label}
-                        className={`flex cursor-not-allowed items-center rounded-2xl py-3 text-sm font-medium text-slate-400 ${
-                          collapsed ? 'justify-center px-2' : 'gap-2 px-3'
-                        }`}
-                      >
-                        <NavIcon icon={item.icon} className={collapsed ? 'h-7 w-7 text-slate-400' : 'h-5 w-5'} />
-                        {!collapsed ? label : null}
-                      </div>
-                    );
-                  }
-
-                  const fullHref = `/${locale}${item.href}`;
-                  const active = pathname === fullHref;
-
-                  return (
-                    <Link
-                      key={item.key}
-                      href={fullHref}
-                      onClick={onItemClick}
-                      title={label}
-                      className={`flex items-center rounded-2xl py-3 text-sm font-medium transition-colors ${
-                        active
-                          ? 'bg-indigo-100 text-indigo-800'
-                          : 'text-slate-700 hover:bg-slate-200 hover:text-slate-900'
-                      } ${collapsed ? 'justify-center px-2' : 'gap-2 px-3'}`}
-                    >
-                      <NavIcon icon={item.icon} className={collapsed ? `h-7 w-7 ${active ? 'text-indigo-700' : 'text-slate-600'}` : 'h-5 w-5'} />
-                      {!collapsed ? label : null}
-                    </Link>
-                  );
-                })}
+                {section.items.map((item) => renderNavItem(item))}
               </nav>
             </div>
           ))}

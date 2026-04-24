@@ -29,10 +29,11 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  sessions      Session[]
-  preferences   UserPreferences?
-  savedArticles SavedArticle[]
+  sessions        Session[]
+  preferences     UserPreferences?
+  savedArticles   SavedArticle[]
   formSubmissions FormSubmission[]
+  roleAssignments UserRoleAssignment[]
 
   @@index([email])
   @@map("users")
@@ -114,6 +115,35 @@ model SearchCache {
 }
 
 // ============================================================================
+// Role Management
+// ============================================================================
+
+model Role {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  permissions     String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userAssignments UserRoleAssignment[]
+
+  @@map("roles")
+}
+
+model UserRoleAssignment {
+  id         String   @id @default(cuid())
+  userId     String
+  roleId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_role_assignments")
+}
+
+// ============================================================================
 // Form Submissions
 // ============================================================================
 
@@ -172,6 +202,49 @@ model PageView {
   @@index([language])
   @@index([timestamp])
   @@map("page_views")
+}
+
+// ============================================================================
+// Languages
+// ============================================================================
+
+model Language {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  code          String    @unique // e.g., "en", "km", "zh"
+  nativeName    String?   // e.g., "ខ្មែរ", "中文"
+  flagEmoji     String?   // e.g., "🇰🇭", "🇨🇳"
+  enabled       Boolean   @default(true)
+  sortOrder     Int       @default(999)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("languages")
+}
+
+// ============================================================================
+// Login Audit Logs
+// ============================================================================
+
+model LoginAudit {
+  id            String    @id @default(cuid())
+  userId        String?   // Null if login failed before user was identified
+  email         String    // Email used for login attempt
+  status        String    // "success", "failed"
+  reason        String?   // Why it failed: "invalid_credentials", "account_locked", etc.
+  
+  // Device & Location
+  ipAddress     String?
+  userAgent     String?
+  latitude      Float?
+  longitude     Float?
+  
+  timestamp     DateTime  @default(now())
+
+  @@index([email])
+  @@index([status])
+  @@index([timestamp])
+  @@map("login_audits")
 }
 
 // ============================================================================

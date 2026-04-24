@@ -3,6 +3,8 @@ import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
 import PreferencesPanel from '@/components/settings/PreferencesPanel';
+import LanguagesTable from '@/components/settings/LanguagesTable';
+import LoginAuditLogs from '@/components/settings/LoginAuditLogs';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getRoleDetails, getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
@@ -35,23 +37,11 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
-  // Load user + preferences from DB
-  const dbUser = await prisma.user.findUnique({
-    where: { email: session.user.email! },
-    select: {
-      id: true,
-      preferences: {
-        select: {
-          notificationsEnabled: true,
-          theme: true,
-          fontSize: true,
-          articlesPerPage: true,
-        },
-      },
-    },
-  });
+  // Load languages from DB
+  const languages = await prisma.language.findMany({ orderBy: { sortOrder: 'asc' } });
 
-  const initialPrefs = dbUser?.preferences ?? {
+  // Default preferences (always use defaults for now - preferences are managed via API)
+  const initialPrefs = {
     notificationsEnabled: true,
     theme: 'light',
     fontSize: 'medium',
@@ -85,7 +75,13 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     <ManagementPageShell
       title={labels.title}
       subtitle={labels.subtitle}
-      main={<PreferencesPanel initial={initialPrefs} locale={localeValue} />}
+      main={
+        <div className="space-y-8">
+          <PreferencesPanel initial={initialPrefs} locale={localeValue} />
+          <LanguagesTable initial={languages} />
+          <LoginAuditLogs />
+        </div>
+      }
       aside={
         <>
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

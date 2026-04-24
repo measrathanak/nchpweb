@@ -5,13 +5,13 @@ import prisma from '@/lib/db';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
-import RolesTable from '@/components/roles/RolesTable';
+import RoleUserPanel from '@/components/roles/RoleUserPanel';
 
-interface RolesPageProps {
+interface RoleUserPageProps {
   params: Promise<{ locale: string }>;
 }
 
-export default async function RolesPage({ params }: RolesPageProps) {
+export default async function RoleUserPage({ params }: RoleUserPageProps) {
   const { locale } = await params;
   const localeValue = locale as Locale;
   const session = await auth();
@@ -27,21 +27,19 @@ export default async function RolesPage({ params }: RolesPageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
-  const roles = await prisma.role.findMany({ orderBy: { createdAt: 'desc' } });
-
-  const labels = {
-    title: localeValue === 'km' ? 'តួនាទី' : 'Roles',
-    subtitle:
-      localeValue === 'km'
-        ? 'គ្រប់គ្រងតួនាទី និងសិទ្ធិចូលប្រើសម្រាប់អ្នកប្រើប្រាស់។'
-        : 'Manage roles and access permissions for users.',
-  };
+  const [roles, users] = await Promise.all([
+    prisma.role.findMany({ orderBy: { name: 'asc' } }),
+    prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true, name: true, firstName: true, lastName: true },
+    }),
+  ]);
 
   return (
     <ManagementPageShell
-      title={labels.title}
-      subtitle={labels.subtitle}
-      main={<RolesTable initial={roles} />}
+      title={localeValue === 'km' ? 'អ្នកប្រើប្រាស់តួនាទី' : 'Role User'}
+      subtitle={localeValue === 'km' ? 'គ្រប់គ្រងអ្នកប្រើប្រាស់សម្រាប់តួនាទីនីមួយៗ។' : 'Manage users assigned to each role.'}
+      main={<RoleUserPanel roles={roles} users={users} />}
     />
   );
 }

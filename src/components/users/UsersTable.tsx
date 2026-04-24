@@ -34,38 +34,61 @@ function ActionMenu({ user, onEdit, onDelete }: ActionMenuProps) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
         aria-label="Actions"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
           <circle cx="12" cy="5" r="1.5" />
           <circle cx="12" cy="12" r="1.5" />
           <circle cx="12" cy="19" r="1.5" />
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-9 z-10 min-w-[120px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+        <div className="absolute left-0 top-9 z-10 min-w-[190px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center gap-2 whitespace-nowrap px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             onClick={() => { setOpen(false); onEdit(user); }}
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
             Edit
           </button>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 whitespace-nowrap px-4 py-2 text-sm text-red-600 hover:bg-red-50"
             onClick={() => { setOpen(false); onDelete(user); }}
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-1 14H6L5 6" />
               <path d="M10 11v6M14 11v6" />
               <path d="M9 6V4h6v2" />
             </svg>
             Delete
+          </button>
+          <button
+            className="flex w-full items-center gap-2 whitespace-nowrap px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            onClick={() => { setOpen(false); onEdit(user); }}
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="9" cy="8" r="2.5" />
+              <path d="M3.5 18c0-2.3 2.4-4 5.5-4s5.5 1.7 5.5 4" />
+              <path d="M15 8h6" />
+              <path d="M18 5v6" />
+            </svg>
+            Permission
+          </button>
+          <button
+            className="flex w-full items-center gap-2 whitespace-nowrap px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            onClick={() => { setOpen(false); onEdit(user); }}
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="7.5" cy="12" r="2.5" />
+              <path d="M10 12h10" />
+              <path d="M16 9l4 3-4 3" />
+            </svg>
+            Reset Password
           </button>
         </div>
       )}
