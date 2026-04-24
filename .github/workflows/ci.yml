@@ -70,7 +70,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: web
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
