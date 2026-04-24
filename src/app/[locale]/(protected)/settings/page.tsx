@@ -3,6 +3,7 @@ import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
 import PreferencesPanel from '@/components/settings/PreferencesPanel';
+import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getRoleDetails, getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
 import prisma from '@/lib/db';
@@ -81,19 +82,12 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   };
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">NPCH</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">{labels.title}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">{labels.subtitle}</p>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <PreferencesPanel initial={initialPrefs} locale={localeValue} />
-        </div>
-
-        <aside className="space-y-6">
+    <ManagementPageShell
+      title={labels.title}
+      subtitle={labels.subtitle}
+      main={<PreferencesPanel initial={initialPrefs} locale={localeValue} />}
+      aside={
+        <>
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">{labels.account}</h2>
             <dl className="mt-4 space-y-3 text-sm">
@@ -125,29 +119,30 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
               </div>
             </div>
           </section>
-        </aside>
-      </div>
-
-      {isDev ? (
-        <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-700">{labels.devAudit}</summary>
-          <div className="mt-4">
-            <GuardAuditPanel
-              locale={localeValue}
-              route={`/${localeValue}/settings`}
-              email={roleDetails.normalizedEmail}
-              role={role}
-              roleSource={roleDetails.source}
-              requiredRole={requiredRole}
-              middlewareAuthCheck={middlewareAuthCheck}
-              middlewareRoleCheck={middlewareRoleCheck}
-              pageAuthCheck={pageAuthCheck}
-              pageRoleCheck={pageRoleCheck}
-              finalAccessDecision={finalAccessDecision}
-            />
-          </div>
-        </details>
-      ) : null}
-    </div>
+        </>
+      }
+      footer={
+        isDev ? (
+          <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-700">{labels.devAudit}</summary>
+            <div className="mt-4">
+              <GuardAuditPanel
+                locale={localeValue}
+                route={`/${localeValue}/settings`}
+                email={roleDetails.normalizedEmail}
+                role={role}
+                roleSource={roleDetails.source}
+                requiredRole={requiredRole}
+                middlewareAuthCheck={middlewareAuthCheck}
+                middlewareRoleCheck={middlewareRoleCheck}
+                pageAuthCheck={pageAuthCheck}
+                pageRoleCheck={pageRoleCheck}
+                finalAccessDecision={finalAccessDecision}
+              />
+            </div>
+          </details>
+        ) : null
+      }
+    />
   );
 }

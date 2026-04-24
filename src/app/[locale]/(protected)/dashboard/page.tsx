@@ -42,7 +42,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
 
   const savedArticles = await prisma.savedArticle.findMany({
     where: {
-      user: { email: session.user?.email ?? '' },
+      user: { email: session?.user?.email ?? '' },
       ...(q
         ? {
             OR: [
@@ -111,7 +111,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       category: article.language === 'km' ? 'Internal Documents' : 'Compliance Documents',
       storage: article.typo3ArticleUid % 2 === 0 ? 'MINIO' : 'Local Disk',
       createdDate: article.savedAt.toLocaleDateString('en-US'),
-      createdBy: session.user?.name ?? 'User',
+      createdBy: session?.user?.name ?? 'User',
       href: `/${localeValue}/article/${article.typo3ArticleUid}`,
     }))
     .filter((row) => (storage === 'all' ? true : row.storage === storage));

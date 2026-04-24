@@ -6,6 +6,7 @@ import { AppRole, getRoleDetails, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
 import CopyRoleDebugLinkButton from '@/components/debug/CopyRoleDebugLinkButton';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
+import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getRoleDebugMessages } from '@/lib/i18n/role-debug';
 
 interface RoleDebugPageProps {
@@ -47,101 +48,129 @@ export default async function RoleDebugPage({ params, searchParams }: RoleDebugP
   const t = getRoleDebugMessages(localeValue);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-gray-200 p-5 space-y-2">
-        <p><span className="font-semibold">{t.email}:</span> {details.normalizedEmail ?? t.na}</p>
-        <p><span className="font-semibold">{t.role}:</span> {effectiveRole}</p>
-        <p><span className="font-semibold">{t.source}:</span> {effectiveSource}</p>
-      </div>
+    <ManagementPageShell
+      title="Role Debug"
+      subtitle="Inspect role resolution and access decisions for protected routes."
+      main={
+        <div className="space-y-6">
+          {isDev ? (
+            <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+              <p className="text-sm text-amber-900">{t.devOnlySimulation}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/${localeValue}/role-debug?as=user`}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                >
+                  {t.simulateUser}
+                </Link>
+                <Link
+                  href={`/${localeValue}/role-debug?as=editor`}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                >
+                  {t.simulateEditor}
+                </Link>
+                <Link
+                  href={`/${localeValue}/role-debug?as=admin`}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                >
+                  {t.simulateAdmin}
+                </Link>
+                <Link
+                  href={`/${localeValue}/role-debug`}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                >
+                  {t.useActualRole}
+                </Link>
+                <CopyRoleDebugLinkButton
+                  locale={localeValue}
+                  labels={{
+                    copyCurrentLink: t.copyCurrentLink,
+                    copied: t.copied,
+                    openInNewTab: t.openInNewTab,
+                  }}
+                />
+              </div>
+            </section>
+          ) : null}
 
-      {isDev ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-3">
-          <p className="text-sm text-amber-900">{t.devOnlySimulation}</p>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/${localeValue}/role-debug?as=user`}
-              className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-            >
-              {t.simulateUser}
-            </Link>
-            <Link
-              href={`/${localeValue}/role-debug?as=editor`}
-              className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-            >
-              {t.simulateEditor}
-            </Link>
-            <Link
-              href={`/${localeValue}/role-debug?as=admin`}
-              className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-            >
-              {t.simulateAdmin}
-            </Link>
-            <Link
-              href={`/${localeValue}/role-debug`}
-              className="px-3 py-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-            >
-              {t.useActualRole}
-            </Link>
-            <CopyRoleDebugLinkButton
-              locale={localeValue}
-              labels={{
-                copyCurrentLink: t.copyCurrentLink,
-                copied: t.copied,
-                openInNewTab: t.openInNewTab,
-              }}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      <div className="rounded-lg border border-gray-200 p-5 space-y-2">
-        <p><span className="font-semibold">{t.actualRole}:</span> {details.role}</p>
-        <p><span className="font-semibold">{t.actualSource}:</span> {details.source}</p>
-      </div>
-
-      {isDev ? (
-        <GuardAuditPanel
-          locale={localeValue}
-          route={`/${localeValue}/role-debug`}
-          email={details.normalizedEmail}
-          role={effectiveRole}
-          roleSource={effectiveSource}
-          requiredRole={roleDebugRequiredRole}
-          middlewareAuthCheck={middlewareAuthCheck}
-          middlewareRoleCheck={middlewareRoleCheck}
-          pageAuthCheck={pageAuthCheck}
-          pageRoleCheck={pageRoleCheck}
-          finalAccessDecision={finalAccessDecision}
-        />
-      ) : null}
-
-      <div className="rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left px-4 py-3">{t.tableRoute}</th>
-              <th className="text-left px-4 py-3">{t.tableRequiredRole}</th>
-              <th className="text-left px-4 py-3">{t.tableAccess}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(([slug, requiredRole]) => {
-              const allowed = hasRoleAccess(effectiveRole, requiredRole);
-              return (
-                <tr key={slug} className="border-t border-gray-200">
-                  <td className="px-4 py-3">/{localeValue}/{slug}</td>
-                  <td className="px-4 py-3">{requiredRole}</td>
-                  <td className="px-4 py-3">
-                    <span className={allowed ? 'text-green-700' : 'text-red-700'}>
-                      {allowed ? t.allowed : t.denied}
-                    </span>
-                  </td>
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-700">{t.tableRoute}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-700">{t.tableRequiredRole}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-700">{t.tableAccess}</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {entries.map(([slug, requiredRole]) => {
+                  const allowed = hasRoleAccess(effectiveRole, requiredRole);
+                  return (
+                    <tr key={slug}>
+                      <td className="px-4 py-3 text-slate-700">/{localeValue}/{slug}</td>
+                      <td className="px-4 py-3 text-slate-700">{requiredRole}</td>
+                      <td className="px-4 py-3">
+                        <span className={allowed ? 'text-emerald-700' : 'text-rose-700'}>
+                          {allowed ? t.allowed : t.denied}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        </div>
+      }
+      aside={
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Role snapshot</h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-slate-500">{t.email}</dt>
+              <dd className="text-right font-medium text-slate-900">{details.normalizedEmail ?? t.na}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-slate-500">{t.role}</dt>
+              <dd className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-indigo-700">{effectiveRole}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-slate-500">{t.source}</dt>
+              <dd className="text-xs font-semibold uppercase text-slate-700">{effectiveSource}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-slate-500">{t.actualRole}</dt>
+              <dd className="font-medium text-slate-900">{details.role}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-slate-500">{t.actualSource}</dt>
+              <dd className="text-xs font-semibold uppercase text-slate-700">{details.source}</dd>
+            </div>
+          </dl>
+        </section>
+      }
+      footer={
+        isDev ? (
+          <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-700">Guard audit (Dev only)</summary>
+            <div className="mt-4">
+              <GuardAuditPanel
+                locale={localeValue}
+                route={`/${localeValue}/role-debug`}
+                email={details.normalizedEmail}
+                role={effectiveRole}
+                roleSource={effectiveSource}
+                requiredRole={roleDebugRequiredRole}
+                middlewareAuthCheck={middlewareAuthCheck}
+                middlewareRoleCheck={middlewareRoleCheck}
+                pageAuthCheck={pageAuthCheck}
+                pageRoleCheck={pageRoleCheck}
+                finalAccessDecision={finalAccessDecision}
+              />
+            </div>
+          </details>
+        ) : null
+      }
+    />
   );
 }

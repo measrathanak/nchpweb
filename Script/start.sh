@@ -27,23 +27,23 @@ fi
 
 echo ""
 echo "Starting Docker Compose services..."
-docker-compose up -d
+docker compose up -d --build
 
 echo ""
 echo "⏳ Waiting for services to be ready..."
 sleep 5
 
 # Check if frontend is running
-if docker ps | grep -q npch_frontend; then
+if docker ps | grep -q npchweb_starter_next; then
     echo "✓ Frontend (Next.js) started on http://localhost:${FRONTEND_PORT:-3000}"
 else
     echo "❌ Frontend failed to start"
-    docker-compose logs frontend
+    docker compose logs web
     exit 1
 fi
 
 # Check if TYPO3 API is accessible
-if docker ps | grep -q npch_api; then
+if docker ps | grep -q npchweb_starter_typo3; then
     echo "✓ API (TYPO3) started on http://localhost:8888"
 else
     echo "❌ API failed to start"
@@ -54,5 +54,5 @@ echo "✅ All services running!"
 echo ""
 echo "Access your site at: http://localhost:${FRONTEND_PORT:-3000}"
 echo ""
-echo "View logs with: docker-compose logs -f"
-echo "Stop services with: docker-compose down"
+echo "View logs with: docker compose logs -f"
+echo "Stop services with: docker compose down"

@@ -211,8 +211,8 @@ const navSections: { title: string; items: NavItem[] }[] = [
     items: [
       { key: 'profile', labelEn: 'Profile', labelKm: 'ប្រវត្តិរូប', href: '/profile', icon: 'profile' },
       { key: 'role-debug', labelEn: 'Role Debug', labelKm: 'ពិនិត្យតួនាទី', href: '/role-debug', icon: 'debug' },
-      { key: 'users', labelEn: 'Users', labelKm: 'អ្នកប្រើប្រាស់', icon: 'users' },
-      { key: 'roles', labelEn: 'Roles', labelKm: 'តួនាទី', icon: 'roles' },
+      { key: 'users', labelEn: 'Users', labelKm: 'អ្នកប្រើប្រាស់', href: '/users', icon: 'users' },
+      { key: 'roles', labelEn: 'Roles', labelKm: 'តួនាទី', href: '/roles', icon: 'roles' },
       { key: 'settings', labelEn: 'Settings', labelKm: 'ការកំណត់', href: '/settings', icon: 'settings' },
     ],
   },

@@ -30,6 +30,12 @@ const pageInfo: Record<string, { titleEn: string; titleKm: string; descEn: strin
     descEn: 'Manage your account, security, and preferences in one place.',
     descKm: 'គ្រប់គ្រងគណនី សុវត្ថិភាព និងចំណូលចិត្តរបស់អ្នកនៅកន្លែងតែមួយ។',
   },
+  '/users': {
+    titleEn: 'Users',
+    titleKm: 'អ្នកប្រើប្រាស់',
+    descEn: 'Manage system users and their contact details.',
+    descKm: 'គ្រប់គ្រងអ្នកប្រើប្រាស់ និងព័ត៌មានទំនាក់ទំនងក្នុងប្រព័ន្ធ។',
+  },
   '/dashboard': {
     titleEn: 'NPCH',
     titleKm: 'NPCH',
