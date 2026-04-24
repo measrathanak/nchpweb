@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: npchweb_starter_next
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+      - TYPO3_API_BASE_URL=${TYPO3_API_BASE_URL}
+      - TYPO3_API_USERNAME=${TYPO3_API_USERNAME}
+      - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD}
+      - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS}
+      - DEFAULT_LOCALE=${DEFAULT_LOCALE}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    depends_on:
+      - typo3
+
+  typo3:
+    image: httpd:2.4
+    container_name: npchweb_starter_typo3
+    ports:
+      - "${TYPO3_PORT:-8888}:80"
+    volumes:
+      - ../Website/Apache24/htdocs:/usr/local/apache2/htdocs:ro
+
+networks:
+  default:
+    name: npchweb-starter-network
