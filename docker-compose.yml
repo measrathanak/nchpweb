@@ -23,10 +23,26 @@ services:
       - "${WEB_PORT:-3000}:3000"
     command: node server.js
     depends_on:
-      postgres:
-        condition: service_healthy
       typo3:
         condition: service_started
+      db-init:
+        condition: service_completed_successfully
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    container_name: npchweb_starter_db_init
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://npch_user:npch_password@postgres:5432/npch_website?schema=public
+    command: sh -lc "npm run db:push && npm run db:seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
   postgres:
     image: postgres:16
