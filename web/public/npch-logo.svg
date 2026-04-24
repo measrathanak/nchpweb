@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">NPCHWEB Logo</title>
+  <desc id="desc">NPCHWEB organization logo for structured publisher metadata.</desc>
+  <rect width="512" height="512" rx="56" fill="#0f172a" />
+  <path d="M110 360V150h40l120 145V150h42v210h-39L152 214v146z" fill="#ffffff" />
+  <rect x="328" y="150" width="74" height="210" rx="14" fill="#1d4ed8" />
+</svg>
