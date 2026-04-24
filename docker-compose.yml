@@ -1,31 +1,49 @@
-version: '3.8'
-
 services:
   web:
     build:
-      context: ./web
+      context: .
       dockerfile: Dockerfile
     container_name: npchweb_starter_next
     env_file:
       - ./.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
-      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-      - TYPO3_API_BASE_URL=${TYPO3_API_BASE_URL}
-      - TYPO3_API_USERNAME=${TYPO3_API_USERNAME}
-      - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD}
-      - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS}
-      - DEFAULT_LOCALE=${DEFAULT_LOCALE}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      - TYPO3_API_BASE_URL=${TYPO3_API_BASE_URL:-http://typo3/typo3rest}
+      - TYPO3_API_USERNAME=${TYPO3_API_USERNAME:-admin}
+      - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD:-password}
+      - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS:-300}
+      - DEFAULT_LOCALE=${DEFAULT_LOCALE:-en}
+      - DATABASE_URL=postgresql://npch_user:npch_password@postgres:5432/npch_website?schema=public
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-docker-dev-secret}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-demo@npch.local,admin@npch.local}
+      - EDITOR_EMAILS=${EDITOR_EMAILS:-}
     ports:
       - "${WEB_PORT:-3000}:3000"
-    volumes:
-      - ./web:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
+    command: node server.js
     depends_on:
-      - typo3
+      postgres:
+        condition: service_healthy
+      typo3:
+        condition: service_started
+
+  postgres:
+    image: postgres:16
+    container_name: npchweb_starter_postgres
+    environment:
+      - POSTGRES_DB=npch_website
+      - POSTGRES_USER=npch_user
+      - POSTGRES_PASSWORD=npch_password
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U npch_user -d npch_website"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   typo3:
     image: httpd:2.4
@@ -38,3 +56,6 @@ services:
 networks:
   default:
     name: npchweb-starter-network
+
+volumes:
+  postgres_data:

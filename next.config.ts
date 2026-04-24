@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Enable i18n routing
   reactStrictMode: true,
+  output: 'standalone',
 
   // Image optimization
   images: {
