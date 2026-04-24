@@ -17,7 +17,9 @@
     "db:studio": "prisma studio",
     "docker:build": "docker-compose -f ../../infrastructure/docker-compose.yml build",
     "docker:up": "docker-compose -f ../../infrastructure/docker-compose.yml up -d",
-    "docker:down": "docker-compose -f ../../infrastructure/docker-compose.yml down"
+    "docker:down": "docker-compose -f ../../infrastructure/docker-compose.yml down",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -31,6 +33,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@prisma/client": "^7.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

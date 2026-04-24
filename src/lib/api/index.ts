@@ -34,7 +34,7 @@ const MOCK_ARTICLES: Article[] = [
       name: 'welcome.jpg',
       title: 'Welcome Image',
       description: 'Welcome to NPCH',
-      url: '/placeholder-article.jpg',
+      url: '/next.svg',
     },
   },
   {
