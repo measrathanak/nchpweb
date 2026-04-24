@@ -48,11 +48,6 @@ export default async function RoleDebugPage({ params, searchParams }: RoleDebugP
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="text-gray-600 mt-1">{t.subtitle}</p>
-      </div>
-
       <div className="rounded-lg border border-gray-200 p-5 space-y-2">
         <p><span className="font-semibold">{t.email}:</span> {details.normalizedEmail ?? t.na}</p>
         <p><span className="font-semibold">{t.role}:</span> {effectiveRole}</p>

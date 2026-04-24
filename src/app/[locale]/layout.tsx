@@ -1,7 +1,7 @@
 import React from 'react';
 import { Locale, locales } from '@/lib/i18n';
 import Header from '@/components/layout/Header';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import ProtectedTopbarActions from '@/components/layout/ProtectedTopbarActions';
 import AuthMenu from '@/components/auth/AuthMenu';
 import { auth } from '@/auth';
 import { getUserRole, hasRoleAccess } from '@/lib/auth/roles';
@@ -32,31 +32,26 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="w-full px-4 py-4 flex justify-between items-center">
             <Header locale={localeValue} />
             <div className="flex items-center gap-3">
               <AuthMenu
                 locale={localeValue}
                 isAuthenticated={Boolean(session?.user)}
                 canAccessDashboard={hasRoleAccess(role, 'editor')}
-                role={role}
                 userName={session?.user?.name}
               />
-              <LanguageSwitcher
-                currentLocale={localeValue}
-                availableLocales={locales}
-                pathname={`/${localeValue}`}
-              />
+              <ProtectedTopbarActions locale={localeValue} userName={session?.user?.name ?? null} />
             </div>
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 py-8">
+        <main className="w-full px-4 py-6">
           {children}
         </main>
 
         <footer className="mt-16 border-t border-gray-200 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="w-full px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
               <div>
                 <h3 className="font-bold mb-4">

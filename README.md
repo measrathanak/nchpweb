@@ -119,6 +119,37 @@ Language mapping uses TYPO3 language IDs:
 - **api**: TYPO3 backend on port 8888
 - **solr**: Search engine on port 8983
 
+## Known-Good Docker Commands
+
+Use these commands from any working directory.
+
+```bash
+# Start or refresh the stack (web + redis + typo3 + one-shot db-init)
+WEB_PORT=3002 TYPO3_PORT=8889 docker compose \
+	-f /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/docker-compose.yml \
+	--env-file /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/.env \
+	up -d web redis typo3 db-init
+
+# Check status
+WEB_PORT=3002 TYPO3_PORT=8889 docker compose \
+	-f /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/docker-compose.yml \
+	--env-file /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/.env \
+	ps -a
+
+# Optional cleanup: remove one-shot init container after it exits with code 0
+WEB_PORT=3002 TYPO3_PORT=8889 docker compose \
+	-f /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/docker-compose.yml \
+	--env-file /Users/microstore/Documents/NPCH/NPCHWEB/frontend/website-next/.env \
+	rm -f db-init
+```
+
+Expected healthy state:
+
+- `web`: `Up ... (healthy)`
+- `redis`: `Up ... (healthy)`
+- `typo3`: `Up ...`
+- `db-init`: `Exited (0)` before cleanup, or removed after cleanup
+
 ## Performance
 
 - Image optimization with Next.js Image component
@@ -127,6 +158,17 @@ Language mapping uses TYPO3 language IDs:
 - Tailwind CSS purging for minimal bundle
 
 ## Troubleshooting
+
+### Why `db-init` shows `Exited (0)`
+
+`db-init` is a one-shot initialization container. It runs startup tasks (such as prepare/seed steps) and then exits successfully.
+
+This is expected behavior:
+
+- `Exited (0)` means success, not failure.
+- Keep it if you want a record of the last init run.
+- Remove it with `docker compose ... rm -f db-init` when you want a cleaner `ps -a` output.
+- Re-run it by including `db-init` again in `docker compose ... up -d web redis typo3 db-init`.
 
 ### Port already in use
 ```bash

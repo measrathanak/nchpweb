@@ -30,19 +30,60 @@ export default function GuardAuditPanel({
 }: GuardAuditPanelProps) {
   const t = getGuardAuditMessages(locale);
 
+  const checks = [
+    { label: t.middlewareAuthCheck, value: middlewareAuthCheck },
+    { label: t.middlewareRoleCheck, value: middlewareRoleCheck },
+    { label: t.pageAuthCheck, value: pageAuthCheck },
+    { label: t.pageRoleCheck, value: pageRoleCheck },
+    { label: t.finalAccessDecision, value: finalAccessDecision, allowDeny: true },
+  ];
+
   return (
-    <div className="rounded-lg border border-sky-200 bg-sky-50 p-5 space-y-2">
-      <h2 className="text-lg font-semibold text-sky-900">{t.title}</h2>
-      <p><span className="font-semibold">{t.route}:</span> {route}</p>
-      <p><span className="font-semibold">{t.email}:</span> {email ?? t.na}</p>
-      <p><span className="font-semibold">{t.role}:</span> {role}</p>
-      <p><span className="font-semibold">{t.roleSource}:</span> {roleSource}</p>
-      <p><span className="font-semibold">{t.requiredRole}:</span> {requiredRole}</p>
-      <p><span className="font-semibold">{t.middlewareAuthCheck}:</span> {middlewareAuthCheck ? t.pass : t.fail}</p>
-      <p><span className="font-semibold">{t.middlewareRoleCheck}:</span> {middlewareRoleCheck ? t.pass : t.fail}</p>
-      <p><span className="font-semibold">{t.pageAuthCheck}:</span> {pageAuthCheck ? t.pass : t.fail}</p>
-      <p><span className="font-semibold">{t.pageRoleCheck}:</span> {pageRoleCheck ? t.pass : t.fail}</p>
-      <p><span className="font-semibold">{t.finalAccessDecision}:</span> {finalAccessDecision ? t.allow : t.deny}</p>
+    <div className="rounded-xl border border-sky-200 bg-gradient-to-b from-sky-50 to-white p-5">
+      <h2 className="text-base font-semibold text-sky-900">{t.title}</h2>
+
+      <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+        <div className="rounded-md border border-sky-100 bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t.route}</dt>
+          <dd className="mt-1 text-slate-800">{route}</dd>
+        </div>
+        <div className="rounded-md border border-sky-100 bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t.email}</dt>
+          <dd className="mt-1 text-slate-800">{email ?? t.na}</dd>
+        </div>
+        <div className="rounded-md border border-sky-100 bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t.role}</dt>
+          <dd className="mt-1 text-slate-800">{role}</dd>
+        </div>
+        <div className="rounded-md border border-sky-100 bg-white p-3">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t.roleSource}</dt>
+          <dd className="mt-1 text-slate-800">{roleSource}</dd>
+        </div>
+        <div className="rounded-md border border-sky-100 bg-white p-3 sm:col-span-2">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t.requiredRole}</dt>
+          <dd className="mt-1 text-slate-800">{requiredRole}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 space-y-2">
+        {checks.map((check) => {
+          const passed = check.value;
+          const text = check.allowDeny ? (passed ? t.allow : t.deny) : passed ? t.pass : t.fail;
+
+          return (
+            <div key={check.label} className="flex items-center justify-between rounded-md border border-sky-100 bg-white px-3 py-2 text-sm">
+              <span className="font-medium text-slate-700">{check.label}</span>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {text}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

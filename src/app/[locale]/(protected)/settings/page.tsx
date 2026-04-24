@@ -2,8 +2,10 @@ import { redirect } from 'next/navigation';
 import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
+import PreferencesPanel from '@/components/settings/PreferencesPanel';
 import { getRoleDetails, getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
+import prisma from '@/lib/db';
 
 interface SettingsPageProps {
   params: Promise<{ locale: string }>;
@@ -32,29 +34,119 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
+  // Load user + preferences from DB
+  const dbUser = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+    select: {
+      id: true,
+      preferences: {
+        select: {
+          notificationsEnabled: true,
+          theme: true,
+          fontSize: true,
+          articlesPerPage: true,
+        },
+      },
+    },
+  });
+
+  const initialPrefs = dbUser?.preferences ?? {
+    notificationsEnabled: true,
+    theme: 'light',
+    fontSize: 'medium',
+    articlesPerPage: 10,
+  };
+
+  const labels = {
+    title: localeValue === 'km' ? 'ការកំណត់' : 'Settings',
+    subtitle:
+      localeValue === 'km'
+        ? 'គ្រប់គ្រងគណនី សុវត្ថិភាព និងចំណូលចិត្តរបស់អ្នកនៅកន្លែងតែមួយ។'
+        : 'Manage your account, security, and preferences from one place.',
+    account: localeValue === 'km' ? 'ព័ត៌មានគណនី' : 'Account overview',
+    role: localeValue === 'km' ? 'តួនាទី' : 'Role',
+    source: localeValue === 'km' ? 'ប្រភពតួនាទី' : 'Role source',
+    security: localeValue === 'km' ? 'សុវត្ថិភាព' : 'Security',
+    sessionSecurity: localeValue === 'km' ? 'សុវត្ថិភាពសម័យប្រើប្រាស់' : 'Session security',
+    sessionHint:
+      localeValue === 'km'
+        ? 'ពិនិត្យឧបករណ៍ដែលបានចូលប្រើ ហើយចេញពីសម័យដែលមិនស្គាល់។'
+        : 'Review active devices and sign out unknown sessions.',
+    passwordSecurity: localeValue === 'km' ? 'សុវត្ថិភាពពាក្យសម្ងាត់' : 'Password security',
+    passwordHint:
+      localeValue === 'km'
+        ? 'ផ្លាស់ប្តូរពាក្យសម្ងាត់របស់អ្នកជាប្រចាំដើម្បីការពារគណនី។'
+        : 'Change your password regularly to keep your account protected.',
+    devAudit: localeValue === 'km' ? 'ព័ត៌មាន Guard (សម្រាប់ Dev)' : 'Guard audit (Dev only)',
+  };
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{localeValue === 'km' ? 'ការកំណត់' : 'Settings'}</h1>
-      <div className="rounded-lg border border-gray-200 p-6 text-gray-700">
-        {localeValue === 'km'
-          ? 'ទំព័រកំណត់សម្រាប់គណនីរបស់អ្នក (អាចបន្ថែមការកំណត់ភាសា និងការជូនដំណឹងបាន)'
-          : 'Settings page for your account (ready for language and notification preferences).'}
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">NPCH</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">{labels.title}</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">{labels.subtitle}</p>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PreferencesPanel initial={initialPrefs} locale={localeValue} />
+        </div>
+
+        <aside className="space-y-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">{labels.account}</h2>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">Email</dt>
+                <dd className="font-medium text-slate-900">{roleDetails.normalizedEmail}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{labels.role}</dt>
+                <dd className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-indigo-700">{role}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{labels.source}</dt>
+                <dd className="text-xs font-semibold uppercase text-slate-700">{roleDetails.source}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">{labels.security}</h2>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-medium text-slate-900">{labels.sessionSecurity}</p>
+                <p className="mt-1 text-sm text-slate-500">{labels.sessionHint}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-medium text-slate-900">{labels.passwordSecurity}</p>
+                <p className="mt-1 text-sm text-slate-500">{labels.passwordHint}</p>
+              </div>
+            </div>
+          </section>
+        </aside>
       </div>
 
       {isDev ? (
-        <GuardAuditPanel
-          locale={localeValue}
-          route={`/${localeValue}/settings`}
-          email={roleDetails.normalizedEmail}
-          role={role}
-          roleSource={roleDetails.source}
-          requiredRole={requiredRole}
-          middlewareAuthCheck={middlewareAuthCheck}
-          middlewareRoleCheck={middlewareRoleCheck}
-          pageAuthCheck={pageAuthCheck}
-          pageRoleCheck={pageRoleCheck}
-          finalAccessDecision={finalAccessDecision}
-        />
+        <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700">{labels.devAudit}</summary>
+          <div className="mt-4">
+            <GuardAuditPanel
+              locale={localeValue}
+              route={`/${localeValue}/settings`}
+              email={roleDetails.normalizedEmail}
+              role={role}
+              roleSource={roleDetails.source}
+              requiredRole={requiredRole}
+              middlewareAuthCheck={middlewareAuthCheck}
+              middlewareRoleCheck={middlewareRoleCheck}
+              pageAuthCheck={pageAuthCheck}
+              pageRoleCheck={pageRoleCheck}
+              finalAccessDecision={finalAccessDecision}
+            />
+          </div>
+        </details>
       ) : null}
     </div>
   );

@@ -1,24 +1,25 @@
-import React from 'react';
+"use client";
+
+import Link from 'next/link';
 import { Locale } from '@/lib/i18n';
+import SidebarToggleButton from '@/components/layout/SidebarToggleButton';
 
 interface HeaderProps {
   locale: Locale;
-  title?: string;
 }
 
-export default function Header({ locale, title = 'NPCH Website' }: HeaderProps) {
+export default function Header({ locale }: HeaderProps) {
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex justify-between items-center">
+    <div className="bg-white">
+      <div className="px-0 py-0">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-            <p className="text-gray-600 mt-1">
-              {locale === 'km' ? 'សូស្វាគមន៍' : 'Welcome'}
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">NPCH Website</h1>
+            <p className="mt-1 text-gray-600">{locale === 'km' ? 'សូស្វាគមន៍' : 'Welcome'}</p>
           </div>
+          <SidebarToggleButton className="hidden md:inline-flex" ariaLabel="Toggle management menu" />
         </div>
       </div>
-    </header>
+    </div>
   );
 }

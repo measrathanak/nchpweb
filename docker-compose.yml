@@ -15,7 +15,8 @@ services:
       - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD:-password}
       - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS:-300}
       - DEFAULT_LOCALE=${DEFAULT_LOCALE:-en}
-      - DATABASE_URL=postgresql://npch_user:npch_password@postgres:5432/npch_website?schema=public
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgresql://npch_user:npch_password@host.docker.internal:5432/npch_website?schema=public}
+      - REDIS_URL=${DOCKER_REDIS_URL:-redis://redis:6379}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-docker-dev-secret}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-demo@npch.local,admin@npch.local}
       - EDITOR_EMAILS=${EDITOR_EMAILS:-}
@@ -23,7 +24,7 @@ services:
       - "${WEB_PORT:-3000}:3000"
     command: node server.js
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "const h=process.env.HOSTNAME||'127.0.0.1';fetch('http://' + h + ':3000/api/health').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -33,39 +34,21 @@ services:
         condition: service_started
       db-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   db-init:
     build:
       context: .
       dockerfile: Dockerfile
-      target: deps
+      target: builder
     container_name: npchweb_starter_db_init
     env_file:
       - ./.env
     environment:
-      - DATABASE_URL=postgresql://npch_user:npch_password@postgres:5432/npch_website?schema=public
-    command: sh -lc "npm run db:push && npm run db:seed"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgresql://npch_user:npch_password@host.docker.internal:5432/npch_website?schema=public}
+    command: sh -lc "npx prisma db push --schema prisma/schema.prisma && npm run db:seed"
     restart: "no"
-
-  postgres:
-    image: postgres:16
-    container_name: npchweb_starter_postgres
-    environment:
-      - POSTGRES_DB=npch_website
-      - POSTGRES_USER=npch_user
-      - POSTGRES_PASSWORD=npch_password
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U npch_user -d npch_website"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   typo3:
     image: httpd:2.4
@@ -75,9 +58,17 @@ services:
     volumes:
       - ../Website/Apache24/htdocs:/usr/local/apache2/htdocs:ro
 
+  redis:
+    image: redis:7-alpine
+    container_name: npchweb_starter_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 networks:
   default:
     name: npchweb-starter-network
-
-volumes:
-  postgres_data:
