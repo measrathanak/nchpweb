@@ -3,12 +3,9 @@ import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
 import PreferencesPanel from '@/components/settings/PreferencesPanel';
-import LanguagesTable from '@/components/settings/LanguagesTable';
-import LoginAuditLogs from '@/components/settings/LoginAuditLogs';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
 import { getRoleDetails, getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
-import prisma from '@/lib/db';
 
 interface SettingsPageProps {
   params: Promise<{ locale: string }>;
@@ -36,9 +33,6 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   if (!middlewareRoleCheck) {
     redirect(`/${localeValue}/forbidden`);
   }
-
-  // Load languages from DB
-  const languages = await prisma.language.findMany({ orderBy: { sortOrder: 'asc' } });
 
   // Default preferences (always use defaults for now - preferences are managed via API)
   const initialPrefs = {
@@ -77,9 +71,9 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       subtitle={labels.subtitle}
       main={
         <div className="space-y-8">
-          <PreferencesPanel initial={initialPrefs} locale={localeValue} />
-          <LanguagesTable initial={languages} />
-          <LoginAuditLogs />
+          <section id="preferences" className="scroll-mt-24">
+            <PreferencesPanel initial={initialPrefs} locale={localeValue} />
+          </section>
         </div>
       }
       aside={

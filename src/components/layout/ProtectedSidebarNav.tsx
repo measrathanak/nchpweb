@@ -236,15 +236,16 @@ const navSections: { title: string; items: NavItem[] }[] = [
     items: [
       { key: 'profile', labelEn: 'Profile', labelKm: 'ប្រវត្តិរូប', href: '/profile', icon: 'profile' },
       { key: 'role-debug', labelEn: 'Role Debug', labelKm: 'ពិនិត្យតួនាទី', href: '/role-debug', icon: 'debug' },
-      { key: 'users', labelEn: 'Users', labelKm: 'អ្នកប្រើប្រាស់', href: '/users', icon: 'users' },
-      { key: 'roles', labelEn: 'Roles', labelKm: 'តួនាទី', href: '/roles', icon: 'roles' },
-      { key: 'role-user', labelEn: 'Role User', labelKm: 'អ្នកប្រើតួនាទី', href: '/role-user', icon: 'role-user' },
       {
         key: 'settings',
         labelEn: 'Settings',
         labelKm: 'ការកំណត់',
+        href: '/settings',
         icon: 'settings',
         children: [
+          { key: 'users', labelEn: 'Users', labelKm: 'អ្នកប្រើប្រាស់', href: '/users', icon: 'users' },
+          { key: 'roles', labelEn: 'Roles', labelKm: 'តួនាទី', href: '/roles', icon: 'roles' },
+          { key: 'role-user', labelEn: 'Role User', labelKm: 'អ្នកប្រើតួនាទី', href: '/role-user', icon: 'role-user' },
           { key: 'languages', labelEn: 'Languages', labelKm: 'ភាសា', href: '/languages', icon: 'languages' },
           { key: 'login-audits', labelEn: 'Login Audits', labelKm: 'ឯកសារលោការ', href: '/login-audits', icon: 'login-audits' },
         ],
@@ -283,6 +284,10 @@ export default function ProtectedSidebarNav({ locale, className, onItemClick, co
     const label = locale === 'km' ? item.labelKm : item.labelEn;
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedKeys.has(item.key);
+    const fullHref = item.href ? `/${locale}${item.href}` : '';
+    const active = item.href
+      ? pathname === fullHref || (hasChildren && pathname.startsWith(`${fullHref}/`))
+      : false;
 
     // Disabled placeholder for items without href and no children
     if (!item.href && !hasChildren) {
@@ -304,28 +309,65 @@ export default function ProtectedSidebarNav({ locale, className, onItemClick, co
     if (hasChildren) {
       return (
         <div key={item.key}>
-          <button
-            onClick={() => toggleExpanded(item.key)}
-            title={label}
-            className={`w-full flex items-center rounded-2xl py-3 text-sm font-medium transition-colors text-slate-700 hover:bg-slate-200 hover:text-slate-900 ${
-              collapsed ? 'justify-center px-2' : 'gap-2 px-3'
-            }`}
-          >
-            <NavIcon icon={item.icon} className={collapsed ? 'h-7 w-7 text-slate-600' : 'h-5 w-5'} />
-            {!collapsed && (
-              <>
-                <span className="flex-1 text-left">{label}</span>
-                <svg
-                  className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {item.href ? (
+            <div
+              className={`w-full flex items-center rounded-2xl py-3 text-sm font-medium transition-colors ${
+                active
+                  ? 'bg-indigo-100 text-indigo-800'
+                  : 'text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+              } ${collapsed ? 'justify-center px-2' : 'gap-2 px-3'}`}
+            >
+              <Link
+                href={fullHref}
+                onClick={onItemClick}
+                title={label}
+                className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2 flex-1 min-w-0'}`}
+              >
+                <NavIcon icon={item.icon} className={collapsed ? `h-7 w-7 ${active ? 'text-indigo-700' : 'text-slate-600'}` : 'h-5 w-5'} />
+                {!collapsed ? <span className="truncate">{label}</span> : null}
+              </Link>
+              {!collapsed && (
+                <button
+                  type="button"
+                  onClick={() => toggleExpanded(item.key)}
+                  aria-label={`Toggle ${label}`}
+                  className="ml-1 rounded-md p-1 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              </>
-            )}
-          </button>
+                  <svg
+                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => toggleExpanded(item.key)}
+              title={label}
+              className={`w-full flex items-center rounded-2xl py-3 text-sm font-medium transition-colors text-slate-700 hover:bg-slate-200 hover:text-slate-900 ${
+                collapsed ? 'justify-center px-2' : 'gap-2 px-3'
+              }`}
+            >
+              <NavIcon icon={item.icon} className={collapsed ? 'h-7 w-7 text-slate-600' : 'h-5 w-5'} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">{label}</span>
+                  <svg
+                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </>
+              )}
+            </button>
+          )}
           {isExpanded && !collapsed && (
             <div className="ml-2 space-y-1 border-l border-slate-200 pl-2">
               {item.children!.map((child) => renderNavItem(child, depth + 1))}
@@ -336,8 +378,6 @@ export default function ProtectedSidebarNav({ locale, className, onItemClick, co
     }
 
     // Regular link item
-    const fullHref = `/${locale}${item.href}`;
-    const active = pathname === fullHref;
 
     return (
       <Link
