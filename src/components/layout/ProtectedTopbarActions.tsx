@@ -34,7 +34,9 @@ export default function ProtectedTopbarActions({ locale, userName, userAvatar }:
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
   const [displayName, setDisplayName] = useState(userName ?? 'Admin User');
   const [displayAvatar, setDisplayAvatar] = useState<string | null>(userAvatar ?? null);
+  const [topbarToast, setTopbarToast] = useState<{ msg: string; kind: 'success' | 'error' | 'info' } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const topbarToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setDisplayName(userName ?? 'Admin User');
@@ -60,9 +62,35 @@ export default function ProtectedTopbarActions({ locale, userName, userAvatar }:
       setDisplayAvatar(payload?.avatar ?? null);
     }
 
+    function normalizeToastMessage(message: string) {
+      const trimmed = message.trim();
+      const isAllCapsStyle = /^[A-Z0-9_:\-,.\s]+$/.test(trimmed) && /[A-Z]/.test(trimmed);
+      if (!isAllCapsStyle) return trimmed;
+
+      const humanized = trimmed
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      return humanized.charAt(0).toUpperCase() + humanized.slice(1);
+    }
+    function onTopbarToast(event: Event) {
+      const payload = (event as CustomEvent<{ msg?: string; kind?: 'success' | 'error' | 'info' }>).detail;
+      if (!payload?.msg) return;
+      if (topbarToastTimerRef.current) clearTimeout(topbarToastTimerRef.current);
+        setTopbarToast({ msg: normalizeToastMessage(payload.msg), kind: payload.kind ?? 'info' });
+      topbarToastTimerRef.current = setTimeout(() => setTopbarToast(null), 3500);
+    }
+
     loadProfile();
     window.addEventListener('npch:profile-updated', onProfileUpdated as EventListener);
-    return () => window.removeEventListener('npch:profile-updated', onProfileUpdated as EventListener);
+    window.addEventListener('npch:topbar-toast', onTopbarToast as EventListener);
+    return () => {
+      window.removeEventListener('npch:profile-updated', onProfileUpdated as EventListener);
+      window.removeEventListener('npch:topbar-toast', onTopbarToast as EventListener);
+      if (topbarToastTimerRef.current) clearTimeout(topbarToastTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -194,6 +222,51 @@ export default function ProtectedTopbarActions({ locale, userName, userAvatar }:
             )}
           </span>
         </button>
+
+        {topbarToast ? (
+          <div
+            className={`absolute right-0 top-full z-20 mt-2 flex min-w-[320px] max-w-[420px] items-center gap-3 rounded-[22px] border-2 px-4 py-3 text-sm font-semibold shadow-2xl backdrop-blur ${
+              topbarToast.kind === 'success'
+                ? 'border-green-500 bg-green-600 text-white'
+                : topbarToast.kind === 'error'
+                  ? 'border-red-500 bg-red-600 text-white'
+                  : 'border-slate-600 bg-slate-700 text-white'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {topbarToast.kind === 'success' ? (
+              <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.6">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            ) : null}
+            {topbarToast.kind === 'error' ? (
+              <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v5" />
+                <circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            ) : null}
+            {topbarToast.kind === 'info' ? (
+              <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v5" />
+                <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            ) : null}
+            <span className="flex-1 tracking-wide">{topbarToast.msg}</span>
+            <button
+              type="button"
+              onClick={() => setTopbarToast(null)}
+              className="rounded p-1 text-white/85 hover:bg-white/20 hover:text-white"
+              aria-label="Dismiss notification"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
 
         {activeMenu === 'user' ? (
           <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 bg-white py-2 shadow-lg">

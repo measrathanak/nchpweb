@@ -18,12 +18,17 @@ interface ProfileEditorProps {
 }
 
 export default function ProfileEditor({ initial }: ProfileEditorProps) {
-  const [form, setForm] = useState({
+  const initialState = {
     firstName: initial.firstName ?? '',
     lastName: initial.lastName ?? '',
     phone: initial.phone ?? '',
     avatar: initial.avatar ?? '',
+  };
+
+  const [form, setForm] = useState({
+    ...initialState,
   });
+  const [lastSaved, setLastSaved] = useState({ ...initialState });
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; kind: 'success' | 'error' | 'info' } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,7 +42,7 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
   function showToast(msg: string, kind: 'success' | 'error' | 'info') {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ msg, kind });
-    toastTimer.current = setTimeout(() => setToast(null), 2500);
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
   }
 
   function setField<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -45,12 +50,7 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
   }
 
   function resetForm() {
-    setForm({
-      firstName: initial.firstName ?? '',
-      lastName: initial.lastName ?? '',
-      phone: initial.phone ?? '',
-      avatar: initial.avatar ?? '',
-    });
+    setForm({ ...lastSaved });
   }
 
   function handleCancel() {
@@ -73,12 +73,34 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         setField('avatar', reader.result);
+        showToast('Photo selected.', 'info');
       }
     };
     reader.readAsDataURL(file);
   }
 
+  function handleRemoveAvatar() {
+    setField('avatar', '');
+    showToast('Photo removed.', 'info');
+  }
+
   async function saveProfile() {
+    const changed: string[] = [];
+    if (form.firstName.trim() !== lastSaved.firstName.trim() || form.lastName.trim() !== lastSaved.lastName.trim()) {
+      changed.push('name');
+    }
+    if (form.phone.trim() !== lastSaved.phone.trim()) {
+      changed.push('phone');
+    }
+    if ((form.avatar || '') !== (lastSaved.avatar || '')) {
+      changed.push('photo');
+    }
+
+    if (changed.length === 0) {
+      showToast('No changes to save.', 'info');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -104,9 +126,19 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
         phone: updated.phone ?? '',
         avatar: updated.avatar ?? '',
       });
+      setLastSaved({
+        firstName: updated.firstName ?? '',
+        lastName: updated.lastName ?? '',
+        phone: updated.phone ?? '',
+        avatar: updated.avatar ?? '',
+      });
 
       window.dispatchEvent(new CustomEvent('npch:profile-updated', { detail: updated }));
-      showToast('Profile updated successfully.', 'success');
+      window.dispatchEvent(
+        new CustomEvent('npch:topbar-toast', {
+          detail: { msg: `Profile updated: ${changed.join(', ')}.`, kind: 'success' },
+        })
+      );
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'Failed to save profile.', 'error');
     } finally {
@@ -118,15 +150,22 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       {toast ? (
         <div
-          className={`mb-4 rounded-lg px-4 py-2 text-sm font-medium ${
+          className={`mb-4 inline-flex max-w-full items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium ${
             toast.kind === 'success'
-              ? 'bg-emerald-600 text-white'
+              ? 'bg-green-600 text-white'
               : toast.kind === 'error'
                 ? 'bg-red-600 text-white'
                 : 'bg-slate-700 text-white'
           }`}
+          role="status"
+          aria-live="polite"
         >
-          {toast.msg}
+          {toast.kind === 'success' ? (
+            <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.8">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          ) : null}
+          <span className="break-words">{toast.msg}</span>
         </div>
       ) : null}
 
@@ -134,9 +173,9 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
 
       <div className="mb-6 flex flex-wrap items-start gap-4">
         <div className="flex flex-col items-center gap-2">
-          <div className="flex h-[180px] w-[180px] max-w-[88vw] items-center justify-center rounded-[20px] border-[3px] border-dashed border-slate-300 bg-slate-50 p-0">
+          <div className="flex h-[190px] w-[160px] max-w-[88vw] items-center justify-center rounded-[18px] border-[3px] border-dashed border-slate-300 bg-slate-50 p-0">
             {form.avatar ? (
-              <img src={form.avatar} alt="Profile" className="h-full w-full rounded-[16px] object-cover object-top" />
+              <img src={form.avatar} alt="Profile" className="h-full w-full rounded-[14px] object-cover object-top" />
             ) : (
               <svg viewBox="0 0 24 24" className="h-10 w-10 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="3" y="4" width="18" height="14" rx="2" />
@@ -146,15 +185,24 @@ export default function ProfileEditor({ initial }: ProfileEditorProps) {
             )}
           </div>
 
-          <label className="inline-flex h-9 min-w-[130px] cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Upload Profile
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
-            />
-          </label>
+          <div className="flex items-center gap-2">
+            <label className="inline-flex h-9 min-w-[88px] cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Upload
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleRemoveAvatar}
+              className="inline-flex h-9 min-w-[88px] items-center justify-center rounded-lg border border-rose-300 px-3 text-sm font-medium text-rose-600 hover:bg-rose-50"
+            >
+              Remove
+            </button>
+          </div>
           <p className="text-xs text-slate-500">PNG/JPG/WebP, max 1MB</p>
         </div>
       </div>
