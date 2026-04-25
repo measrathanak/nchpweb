@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
 import { Locale } from '@/lib/i18n';
 import { auth } from '@/auth';
+import prisma from '@/lib/db';
 import GuardAuditPanel from '@/components/debug/GuardAuditPanel';
 import ManagementPageShell from '@/components/layout/ManagementPageShell';
+import ProfileEditor from '@/components/settings/ProfileEditor';
 import { getRoleDetails, getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import { protectedRouteRolePolicy } from '@/lib/auth/protected-routes';
 
@@ -33,6 +35,20 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     redirect(`/${localeValue}/forbidden`);
   }
 
+  const userProfile = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      avatar: true,
+      language: true,
+    },
+  });
+
   const labels = {
     title: localeValue === 'km' ? 'ប្រវត្តិរូប' : 'Profile',
     subtitle:
@@ -56,29 +72,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     <ManagementPageShell
       title={labels.title}
       subtitle={labels.subtitle}
-      main={
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">{labels.account}</h2>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-slate-500">{labels.displayName}</dt>
-              <dd className="font-medium text-slate-900">{session.user.name ?? 'User'}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-slate-500">{labels.email}</dt>
-              <dd className="font-medium text-slate-900">{session.user.email}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-slate-500">{labels.role}</dt>
-              <dd className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold uppercase text-indigo-700">{role}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-slate-500">{labels.roleSource}</dt>
-              <dd className="text-xs font-semibold uppercase text-slate-700">{roleDetails.source}</dd>
-            </div>
-          </dl>
-        </section>
-      }
+      main={userProfile ? <ProfileEditor initial={userProfile} /> : null}
       aside={
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">{labels.security}</h2>

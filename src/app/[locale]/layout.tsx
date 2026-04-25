@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import ProtectedTopbarActions from '@/components/layout/ProtectedTopbarActions';
 import AuthMenu from '@/components/auth/AuthMenu';
 import { auth } from '@/auth';
+import prisma from '@/lib/db';
 import { getUserRole, hasRoleAccess } from '@/lib/auth/roles';
 import type { Metadata } from 'next';
 
@@ -28,6 +29,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   const localeValue = locale as Locale;
   const session = await auth();
   const role = getUserRole(session?.user?.email);
+  const currentUser = session?.user?.email
+    ? await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { name: true, avatar: true },
+      })
+    : null;
 
   return (
     <>
@@ -41,7 +48,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
                 canAccessDashboard={hasRoleAccess(role, 'editor')}
                 userName={session?.user?.name}
               />
-              <ProtectedTopbarActions locale={localeValue} userName={session?.user?.name ?? null} />
+              <ProtectedTopbarActions
+                locale={localeValue}
+                userName={currentUser?.name ?? session?.user?.name ?? null}
+                userAvatar={currentUser?.avatar ?? null}
+              />
             </div>
           </div>
         </header>

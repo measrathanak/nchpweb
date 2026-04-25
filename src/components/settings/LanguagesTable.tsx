@@ -260,6 +260,34 @@ export default function LanguagesTable({ initial }: Props) {
     }
   };
 
+  if (editingLang) {
+    return (
+      <LanguageInlineForm
+        lang={editingLang}
+        onSave={handleSave}
+        onCancel={() => {
+          setIsAdding(false);
+          setEditingLang(null);
+        }}
+        loading={loading}
+      />
+    );
+  }
+
+  if (isAdding) {
+    return (
+      <LanguageInlineForm
+        lang={null}
+        onSave={handleSave}
+        onCancel={() => {
+          setIsAdding(false);
+          setEditingLang(null);
+        }}
+        loading={loading}
+      />
+    );
+  }
+
   return (
     <div className="space-y-5">
       {/* Toast */}
@@ -283,18 +311,6 @@ export default function LanguagesTable({ initial }: Props) {
           Add Language
         </button>
       </div>
-
-      {(isAdding || editingLang) && (
-        <LanguageInlineForm
-          lang={editingLang}
-          onSave={handleSave}
-          onCancel={() => {
-            setIsAdding(false);
-            setEditingLang(null);
-          }}
-          loading={loading}
-        />
-      )}
 
       {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">

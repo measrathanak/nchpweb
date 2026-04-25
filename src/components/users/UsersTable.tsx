@@ -232,6 +232,131 @@ interface ConfirmDeleteProps {
   onConfirm: () => Promise<void>;
 }
 
+interface EditUserInlineProps {
+  user: UserRow;
+  onCancel: () => void;
+  onSave: (data: { email: string; firstName: string; lastName: string; phone: string }) => Promise<void>;
+}
+
+function EditUserInline({ user, onCancel, onSave }: EditUserInlineProps) {
+  const [form, setForm] = useState({
+    email: user.email,
+    firstName: user.firstName ?? '',
+    lastName: user.lastName ?? '',
+    phone: user.phone ?? '',
+    role: '',
+  });
+  const [error, setError] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  function handleChange(key: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setError('');
+  }
+
+  function submit() {
+    if (!form.email.trim() || !form.email.includes('@')) {
+      setError('A valid email is required.');
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await onSave({
+          email: form.email.trim(),
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          phone: form.phone.trim(),
+        });
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to update user.');
+      }
+    });
+  }
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+      <h2 className="mb-4 text-3xl font-semibold text-slate-700">Edit User</h2>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">First Name</label>
+          <input
+            type="text"
+            value={form.firstName}
+            onChange={(e) => handleChange('firstName', e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+            placeholder="First name"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Last Name</label>
+          <input
+            type="text"
+            value={form.lastName}
+            onChange={(e) => handleChange('lastName', e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+            placeholder="Last name"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Mobile Number</label>
+          <input
+            type="tel"
+            value={form.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+            placeholder="012 345 678"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+          <input
+            type="email"
+            value={form.email}
+            disabled
+            className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 max-w-xl">
+        <label className="mb-2 block text-sm font-medium text-slate-700">Roles</label>
+        <select
+          value={form.role}
+          onChange={(e) => handleChange('role', e.target.value)}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none"
+        >
+          <option value="">Select role</option>
+        </select>
+      </div>
+
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+      <div className="mt-6 flex items-center gap-3">
+        <button
+          onClick={submit}
+          disabled={isPending}
+          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+            <path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/>
+          </svg>
+          {isPending ? 'Save...' : 'Save'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+            <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.54 12.12-1.42 1.42L12 13.41l-2.12 2.13-1.42-1.42L10.59 12 8.46 9.88l1.42-1.42L12 10.59l2.12-2.13 1.42 1.42L13.41 12z"/>
+          </svg>
+          Cancel
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ConfirmDelete({ user, onCancel, onConfirm }: ConfirmDeleteProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -522,6 +647,7 @@ interface UsersTableProps {
 export default function UsersTable({ initial }: UsersTableProps) {
   const [users, setUsers] = useState<UserRow[]>(initial);
   const [modal, setModal] = useState<{ type: 'add' | 'edit'; user?: UserRow } | null>(null);
+  const [editTarget, setEditTarget] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<UserRow | null>(null);
   const [resetPasswordTarget, setResetPasswordTarget] = useState<UserRow | null>(null);
@@ -541,7 +667,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
   }
 
   async function handleEditSave(data: { email: string; firstName: string; lastName: string; phone: string; password?: string }) {
-    const user = modal?.user;
+    const user = editTarget;
     if (!user) return;
     const res = await fetch(`/api/users/${user.id}`, {
       method: 'PATCH',
@@ -551,6 +677,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
     if (!res.ok) throw new Error('Failed to update user');
     const updated = await res.json() as UserRow;
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    setEditTarget(null);
   }
 
   async function handleDelete() {
@@ -585,6 +712,13 @@ export default function UsersTable({ initial }: UsersTableProps) {
   return (
     <>
       {!permissionTarget ? (
+        editTarget ? (
+          <EditUserInline
+            user={editTarget}
+            onCancel={() => setEditTarget(null)}
+            onSave={handleEditSave}
+          />
+        ) : (
         <>
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between px-4 py-5">
@@ -624,7 +758,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
                       <td className="pl-4 pr-2 py-3">
                         <ActionMenu
                           user={user}
-                          onEdit={(u) => setModal({ type: 'edit', user: u })}
+                          onEdit={(u) => setEditTarget(u)}
                           onDelete={(u) => setDeleteTarget(u)}
                           onPermission={(u) => setPermissionTarget(u)}
                           onResetPassword={(u) => setResetPasswordTarget(u)}
@@ -644,9 +778,6 @@ export default function UsersTable({ initial }: UsersTableProps) {
           {modal?.type === 'add' && (
             <UserModal mode="add" onClose={() => setModal(null)} onSave={handleAddSave} />
           )}
-          {modal?.type === 'edit' && modal.user && (
-            <UserModal mode="edit" initial={modal.user} onClose={() => setModal(null)} onSave={handleEditSave} />
-          )}
           {deleteTarget && (
             <ConfirmDelete user={deleteTarget} onCancel={() => setDeleteTarget(null)} onConfirm={handleDelete} />
           )}
@@ -654,6 +785,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
             <ResetPasswordModal user={resetPasswordTarget} onClose={() => setResetPasswordTarget(null)} onConfirm={handleResetPassword} />
           )}
         </>
+        )
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           {permissionTarget && (
