@@ -1,0 +1,130 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: npchweb_nginx
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      web_1:
+        condition: service_healthy
+      web_2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  web_1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: npchweb_next_1
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      - TYPO3_API_BASE_URL=${TYPO3_API_BASE_URL:-http://typo3/typo3rest}
+      - TYPO3_API_USERNAME=${TYPO3_API_USERNAME:-admin}
+      - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD:-password}
+      - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS:-300}
+      - DEFAULT_LOCALE=${DEFAULT_LOCALE:-en}
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgresql://npch_user:npch_password@host.docker.internal:5432/npch_website?schema=public}
+      - REDIS_URL=${DOCKER_REDIS_URL:-redis://redis:6379}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-docker-dev-secret}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-demo@npch.local,admin@npch.local}
+      - EDITOR_EMAILS=${EDITOR_EMAILS:-}
+    expose:
+      - "3000"
+    command: node server.js
+    healthcheck:
+      test: ["CMD", "node", "-e", "const h=process.env.HOSTNAME||'127.0.0.1';fetch('http://' + h + ':3000/api/health').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      typo3:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  web_2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: npchweb_next_2
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      - TYPO3_API_BASE_URL=${TYPO3_API_BASE_URL:-http://typo3/typo3rest}
+      - TYPO3_API_USERNAME=${TYPO3_API_USERNAME:-admin}
+      - TYPO3_API_PASSWORD=${TYPO3_API_PASSWORD:-password}
+      - TYPO3_API_REVALIDATE_SECONDS=${TYPO3_API_REVALIDATE_SECONDS:-300}
+      - DEFAULT_LOCALE=${DEFAULT_LOCALE:-en}
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgresql://npch_user:npch_password@host.docker.internal:5432/npch_website?schema=public}
+      - REDIS_URL=${DOCKER_REDIS_URL:-redis://redis:6379}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-docker-dev-secret}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-demo@npch.local,admin@npch.local}
+      - EDITOR_EMAILS=${EDITOR_EMAILS:-}
+    expose:
+      - "3000"
+    command: node server.js
+    healthcheck:
+      test: ["CMD", "node", "-e", "const h=process.env.HOSTNAME||'127.0.0.1';fetch('http://' + h + ':3000/api/health').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      typo3:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: npchweb_db_init
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgresql://npch_user:npch_password@host.docker.internal:5432/npch_website?schema=public}
+    command: sh -lc "npx prisma db push --schema prisma/schema.prisma && npm run db:seed"
+    restart: "no"
+
+  typo3:
+    image: httpd:2.4
+    container_name: npchweb_typo3
+    ports:
+      - "${TYPO3_PORT:-8888}:80"
+    volumes:
+      - ../Website/Apache24/htdocs:/usr/local/apache2/htdocs:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: npchweb_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  default:
+    name: npchweb-nginx-network

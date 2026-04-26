@@ -20,7 +20,9 @@ interface ActionMenuProps {
 
 function ActionMenu({ user, onEdit, onDelete, onPermission, onResetPassword }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -32,10 +34,19 @@ function ActionMenu({ user, onEdit, onDelete, onPermission, onResetPassword }: A
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setOpenUp(window.innerHeight - rect.bottom < 220);
+    }
+    setOpen((v) => !v);
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={handleToggle}
         className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
         aria-label="Actions"
       >
@@ -46,7 +57,7 @@ function ActionMenu({ user, onEdit, onDelete, onPermission, onResetPassword }: A
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-9 z-10 min-w-[190px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+        <div className={`absolute left-0 z-10 min-w-[190px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg ${openUp ? 'bottom-10' : 'top-9'}`}>
           <button
             className="flex w-full items-center gap-2 whitespace-nowrap px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             onClick={() => { setOpen(false); onEdit(user); }}
@@ -507,100 +518,86 @@ function PermissionModal({ user, onClose, onSave }: PermissionModalProps) {
   }
 
   return (
-    <div className="w-full">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Header */}
-      <div className="border-b border-slate-200 p-6 flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">User Page Permission To</h2>
-          <p className="text-sm text-indigo-600 font-medium mt-1">{user.email}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600"
-        >
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+      <div className="border-b border-slate-200 px-6 py-4">
+        <h2 className="text-4xl font-semibold text-slate-800">User Page Permission To</h2>
+        <p className="mt-1 text-sm font-medium text-indigo-600">{user.email}</p>
       </div>
 
       {/* Content */}
-      <div className="px-6 pb-6">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+      <div className="space-y-5 px-6 py-5">
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
-        {/* Select All Checkbox */}
-        <div className="mb-6 p-4 border border-slate-200 rounded-lg bg-slate-50">
-          <label className="flex items-center gap-3 cursor-pointer">
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-slate-800">Permission</h3>
+
+          <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={allSelected}
               onChange={toggleSelectAll}
-              className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600"
             />
-            <span className="font-semibold text-slate-900">Select All</span>
+            <span>Select All</span>
           </label>
-        </div>
 
-        <div className="space-y-6">
-          {permissionGroups.map((group) => (
-            <div key={group.title} className="border border-slate-200 rounded-lg p-4">
-              <label className="mb-4 flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isGroupAllSelected(group)}
-                  ref={(input) => {
-                    if (input) {
-                      input.indeterminate = isGroupPartiallySelected(group);
-                    }
-                  }}
-                  onChange={() => toggleGroup(group)}
-                  className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="font-semibold text-slate-900">{group.title}</span>
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {group.permissions.map((perm) => (
-                  <label
-                    key={perm.code}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 cursor-pointer border border-slate-100"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={permissions.includes(perm.code)}
-                      onChange={() => togglePermission(perm.code)}
-                      className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-sm text-slate-700">{perm.label}</span>
-                  </label>
-                ))}
+          <div className="space-y-4">
+            {permissionGroups.map((group) => (
+              <div key={group.title}>
+                <label className="mb-2 flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={isGroupAllSelected(group)}
+                    ref={(input) => {
+                      if (input) {
+                        input.indeterminate = isGroupPartiallySelected(group);
+                      }
+                    }}
+                    onChange={() => toggleGroup(group)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                  />
+                  {group.title}
+                </label>
+                <div className="ml-6 grid grid-cols-1 gap-x-6 gap-y-2 md:grid-cols-3">
+                  {group.permissions.map((perm) => (
+                    <label
+                      key={perm.code}
+                      className="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={permissions.includes(perm.code)}
+                        onChange={() => togglePermission(perm.code)}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                      />
+                      {perm.label}
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-200 bg-white p-6 flex justify-end gap-3">
+      <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
         <button
           onClick={onClose}
-          className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50"
+          className="rounded-lg bg-red-500 px-5 py-2 text-sm font-medium text-white hover:bg-red-600"
         >
-          CANCEL
+          Cancel
         </button>
         <button
           onClick={submit}
           disabled={isPending}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-60"
+          className="rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
         >
-          {isPending ? 'Saving…' : 'SAVE'}
+          {isPending ? 'Saving…' : 'Save'}
         </button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -646,11 +643,25 @@ interface UsersTableProps {
 
 export default function UsersTable({ initial }: UsersTableProps) {
   const [users, setUsers] = useState<UserRow[]>(initial);
+  const [currentPage, setCurrentPage] = useState(1);
   const [modal, setModal] = useState<{ type: 'add' | 'edit'; user?: UserRow } | null>(null);
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<UserRow | null>(null);
   const [resetPasswordTarget, setResetPasswordTarget] = useState<UserRow | null>(null);
+
+  const rowsPerPage = 8;
+  const totalPages = Math.max(1, Math.ceil(users.length / rowsPerPage));
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return users.slice(start, start + rowsPerPage);
+  }, [users, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   async function handleAddSave(data: { email: string; firstName: string; lastName: string; phone: string; password?: string }) {
     const res = await fetch('/api/users', {
@@ -720,7 +731,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
           />
         ) : (
         <>
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between px-4 py-5">
               <h2 className="text-lg font-semibold text-slate-900">Users</h2>
               <button
@@ -753,7 +764,7 @@ export default function UsersTable({ initial }: UsersTableProps) {
                     </td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  paginatedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50/50">
                       <td className="pl-4 pr-2 py-3">
                         <ActionMenu
@@ -773,6 +784,35 @@ export default function UsersTable({ initial }: UsersTableProps) {
                 )}
               </tbody>
             </table>
+
+            {users.length > 0 && (
+              <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm">
+                <p className="text-slate-600">
+                  Showing {(currentPage - 1) * rowsPerPage + 1}
+                  {' '}-{' '}
+                  {Math.min(currentPage * rowsPerPage, users.length)} of {users.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-2 text-slate-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
           {modal?.type === 'add' && (
@@ -787,11 +827,9 @@ export default function UsersTable({ initial }: UsersTableProps) {
         </>
         )
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {permissionTarget && (
-            <PermissionModal user={permissionTarget} onClose={() => setPermissionTarget(null)} onSave={handlePermissionSave} />
-          )}
-        </div>
+        permissionTarget && (
+          <PermissionModal user={permissionTarget} onClose={() => setPermissionTarget(null)} onSave={handlePermissionSave} />
+        )
       )}
     </>
   );

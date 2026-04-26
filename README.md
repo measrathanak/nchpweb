@@ -119,6 +119,35 @@ Language mapping uses TYPO3 language IDs:
 - **api**: TYPO3 backend on port 8888
 - **solr**: Search engine on port 8983
 
+## Nginx + WebSocket + Load Balancing Architecture
+
+This project now includes an optional edge architecture with Nginx in front of two Next.js web instances.
+
+- **nginx**: reverse proxy entrypoint (port `${WEB_PORT:-3000}` -> container `80`)
+- **web_1**: Next.js app node 1
+- **web_2**: Next.js app node 2
+- **redis / typo3 / db-init**: shared supporting services
+
+Nginx configuration is in `nginx/nginx.conf` and includes:
+
+- round-robin/least-connection style upstream balancing across `web_1` + `web_2`
+- WebSocket upgrade headers (`Upgrade` and `Connection`) for realtime endpoints
+- forwarded headers for host/proto/client IP
+
+### Run the Nginx load-balanced stack
+
+```bash
+npm run docker:up:lb
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+### Stop the Nginx load-balanced stack
+
+```bash
+npm run docker:down:lb
+```
+
 ## Known-Good Docker Commands
 
 Use these commands from any working directory.

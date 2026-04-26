@@ -18,6 +18,8 @@
     "docker:build": "docker compose --env-file .env build",
     "docker:up": "docker compose --env-file .env up -d --build",
     "docker:down": "docker compose --env-file .env down",
+    "docker:up:lb": "docker compose --env-file .env down --remove-orphans && docker compose -f docker-compose.nginx.yml --env-file .env up -d --build --remove-orphans",
+    "docker:down:lb": "docker compose -f docker-compose.nginx.yml --env-file .env down --remove-orphans",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed"
   },
